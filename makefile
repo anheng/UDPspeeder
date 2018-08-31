@@ -6,18 +6,18 @@ cc_mips24kc_le=/toolchains/lede-sdk-17.01.2-ramips-mt7621_gcc-5.4.0_musl-1.1.16.
 #cc_arm= /toolchains/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-g++ -march=armv6 -marm 
 cc_arm= /toolchains/arm-2014.05/bin/arm-none-linux-gnueabi-g++
 #cc_bcm2708=/home/wangyu/raspberry/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++ 
-FLAGS= -std=c++11   -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers -ggdb
+FLAGS= -std=c++11   -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers
 
 SOURCES=main.cpp log.cpp common.cpp lib/fec.c lib/rs.c packet.cpp delay_manager.cpp fd_manager.cpp connection.cpp fec_manager.cpp misc.cpp tunnel.cpp
 
-NAME=speederv2
+NAME=udpspeeder
 TARGETS=amd64 arm mips24kc_be x86  mips24kc_le
 
 TAR=${NAME}_binaries.tar.gz `echo ${TARGETS}|sed -r 's/([^ ]+)/speederv2_\1/g'` version.txt
 
 all:git_version
 	rm -f ${NAME}
-	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt -ggdb -static -O3
+	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt -O3
 debug: git_version
 	rm -f ${NAME}
 	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt -Wformat-nonliteral -D MY_DEBUG 
@@ -26,34 +26,34 @@ debug2: git_version
 	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt -Wformat-nonliteral -ggdb
 
 mips24kc_be: git_version
-	${cc_mips24kc_be}  -o ${NAME}_$@   -I. ${SOURCES} ${FLAGS} -lrt -lgcc_eh -static -O3
+	${cc_mips24kc_be}  -o ${NAME}_$@   -I. ${SOURCES} ${FLAGS} -lrt -lgcc_eh -O3
 
 mips24kc_be_debug: git_version
-	${cc_mips24kc_be}  -o ${NAME}_$@   -I. ${SOURCES} ${FLAGS} -lrt -lgcc_eh -static -ggdb
+	${cc_mips24kc_be}  -o ${NAME}_$@   -I. ${SOURCES} ${FLAGS} -lrt -lgcc_eh -ggdb
 
 mips24kc_le: git_version
-	${cc_mips24kc_le}  -o ${NAME}_$@   -I. ${SOURCES} ${FLAGS} -lrt -lgcc_eh -static -O3
+	${cc_mips24kc_le}  -o ${NAME}_$@   -I. ${SOURCES} ${FLAGS} -lrt -lgcc_eh -O3
 
 amd64:git_version
-	${cc_local}   -o ${NAME}_$@    -I. ${SOURCES} ${FLAGS} -lrt -static -O3
+	${cc_local}   -o ${NAME}_$@    -I. ${SOURCES} ${FLAGS} -lrt -O3
 amd64_debug:git_version
-	${cc_local}   -o ${NAME}_$@    -I. ${SOURCES} ${FLAGS} -lrt -static -ggdb
+	${cc_local}   -o ${NAME}_$@    -I. ${SOURCES} ${FLAGS} -lrt -ggdb
 x86:git_version
-	${cc_local}   -o ${NAME}_$@      -I. ${SOURCES} ${FLAGS} -lrt -static -O3 -m32
+	${cc_local}   -o ${NAME}_$@      -I. ${SOURCES} ${FLAGS} -lrt -O3 -m32
 arm:git_version
-	${cc_arm}   -o ${NAME}_$@      -I. ${SOURCES} ${FLAGS} -lrt -static -O3
+	${cc_arm}   -o ${NAME}_$@      -I. ${SOURCES} ${FLAGS} -lrt -O3
 
 arm_debug:git_version
-	${cc_arm}   -o ${NAME}_$@      -I. ${SOURCES} ${FLAGS} -lrt -static -ggdb
+	${cc_arm}   -o ${NAME}_$@      -I. ${SOURCES} ${FLAGS} -lrt -ggdb
 
 cross:git_version
 	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -O3
 
 cross2:git_version
-	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -static -lgcc_eh -O3   
+	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -lgcc_eh -O3
 
 cross3:git_version
-	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -static -O3
+	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -O3
 
 release: ${TARGETS} 
 	cp git_version.h version.txt
@@ -63,6 +63,10 @@ clean:
 	rm -f ${TAR}
 	rm -f speeder speeder_cross
 	rm -f git_version.h
+install:all
+	cp ${NAME} ${DESTDIR}/usr/bin/${NAME}
+uninstall:
+	rm ${DESTDIR}/usr/bin/${NAME}
 
 git_version:
 	    echo "const char * const gitversion = \"$(shell git rev-parse HEAD)\";" > git_version.h
